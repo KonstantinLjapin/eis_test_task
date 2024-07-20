@@ -1,0 +1,60 @@
+@startuml
+
+
+
+class Tariff {
+    __tablename__ = 'tariffs'
+
+    id = Column(Integer, primary_key=True)
+    rate_per_square_meter = Column(Float, nullable=False)
+    valid_from = Column(String, nullable=False)
+    valid_to = Column(String, nullable=True)
+}
+
+class House {
+    __tablename__ : 'houses'
+
+    id = Column(Integer, primary_key=True)
+    address = Column(String, nullable=False)
+
+    apartments = relationship('Apartment', back_populates='house')
+}
+
+class Apartment {
+    __tablename__ = 'apartments'
+
+    id = Column(Integer, primary_key=True)
+    house_id = Column(Integer, ForeignKey('houses.id'), nullable=False)
+    area = Column(Float, nullable=False)
+
+    house = relationship('House', back_populates='apartments')
+    water_meters = relationship('WaterMeter', back_populates='apartment')
+}
+
+class WaterMeter {
+  __tablename__ = 'water_meters'
+
+    id = Column(Integer, primary_key=True)
+    apartment_id = Column(Integer, ForeignKey('apartments.id'), nullable=False)
+
+    apartment = relationship('Apartment', back_populates='water_meters')
+    readings = relationship('Reading', back_populates='water_meter')
+}
+
+class Reading{
+    __tablename__ = 'readings'
+
+    id = Column(Integer, primary_key=True)
+    water_meter_id = Column(Integer, ForeignKey('water_meters.id'), nullable=False)
+    month = Column(String, nullable=False)
+    value = Column(Float, nullable=False)
+
+    water_meter = relationship('WaterMeter', back_populates='readings')
+}
+
+WaterMeter <-=-> Reading: have many
+Tariff <- WaterMeter: have one
+WaterMeter <= Apartment: have many
+Apartment <== House: have many
+@enduml
+
