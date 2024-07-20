@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.ext.asyncio import create_async_engine
 from typing import AsyncGenerator
+from api_app.database.models import Base
 
 
 def make_connection_string() -> str:
@@ -46,3 +47,9 @@ class DatabaseHelper:
             yield session
 
 
+async def base_create() -> None:
+    db: DatabaseHelper = DatabaseHelper()
+    engine: AsyncEngine = db.engine
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    await engine.dispose()
