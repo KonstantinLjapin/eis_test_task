@@ -1,0 +1,17 @@
+# Virtual environment
+.env
+.venv/
+venv/
+
+#all
+docker-compose.yml
+dump/
+start_test.sh
+Dockerfile
+.idea
+.env.dist
+.git
+.gitignore
+
+dump/
+
