@@ -7,8 +7,8 @@ class Tariff {
 
     id = Column(Integer, primary_key=True)
     rate_per_square_meter = Column(Float, nullable=False)
-    valid_from = Column(String, nullable=False)
-    valid_to = Column(String, nullable=True)
+    rate_per_unit_of_water = Column(Float, nullable=False)
+
 }
 
 class House {
@@ -16,7 +16,6 @@ class House {
 
     id = Column(Integer, primary_key=True)
     address = Column(String, nullable=False)
-
     apartments = relationship('Apartment', back_populates='house')
 }
 
@@ -26,7 +25,6 @@ class Apartment {
     id = Column(Integer, primary_key=True)
     house_id = Column(Integer, ForeignKey('houses.id'), nullable=False)
     area = Column(Float, nullable=False)
-
     house = relationship('House', back_populates='apartments')
     water_meters = relationship('WaterMeter', back_populates='apartment')
 }
@@ -36,9 +34,8 @@ class WaterMeter {
 
     id = Column(Integer, primary_key=True)
     apartment_id = Column(Integer, ForeignKey('apartments.id'), nullable=False)
-
     apartment = relationship('Apartment', back_populates='water_meters')
-    readings = relationship('Reading', back_populates='water_meter')
+    indications = relationship('Reading', back_populates='water_meter')
 }
 
 class Reading{
@@ -48,13 +45,25 @@ class Reading{
     water_meter_id = Column(Integer, ForeignKey('water_meters.id'), nullable=False)
     month = Column(String, nullable=False)
     value = Column(Float, nullable=False)
-
     water_meter = relationship('WaterMeter', back_populates='readings')
 }
 
+class WaterSupplyBill {
+bill: float = Tariff.rate_per_unit_of_water × consumption(Indications.value(by last mounts)-Indications.value(by last mounts))
+}
+
+class CommonPropertyBill {
+bill: float = Tariff.rate_per_square_meter × Apartment.area
+}
+
+class Rent {
+WaterSupplyBill
+CommonPropertyBill
+}
+
 WaterMeter <-=-> Reading: have many
-Tariff <- WaterMeter: have one
 WaterMeter <= Apartment: have many
 Apartment <== House: have many
+Rent --> Apartment
 @enduml
 
