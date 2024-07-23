@@ -17,50 +17,53 @@ class Item(Base):
 
 
 class House(Base):
-    __tablename__ = 'houses'
+    __tablename__ = 'house'
 
     id = Column(Integer, primary_key=True)
     address = Column(String, nullable=False)
 
-    apartments = relationship('Apartment', back_populates='house')
+    apartment = relationship('Apartment', back_populates='house')
 
 
 class Apartment(Base):
-    __tablename__ = 'apartments'
+    __tablename__ = 'apartment'
 
     id = Column(Integer, primary_key=True)
-    house_id = Column(Integer, ForeignKey('houses.id'), nullable=False)
+    house_id = Column(Integer, ForeignKey('house.id'), nullable=False)
     area = Column(Float, nullable=False)
     water_supply_bill = Column(Float, nullable=True)
     common_property_bill = Column(Float, nullable=True)
-    house = relationship('House', back_populates='apartments')
-    water_meters = relationship('WaterMeter', back_populates='apartment')
+    house = relationship('House', back_populates='apartment')
+    water_meter = relationship('WaterMeter', back_populates='apartment')
+    tariff = relationship('Tariff', back_populates='apartment')
 
 
 class WaterMeter(Base):
-    __tablename__ = 'water_meters'
+    __tablename__ = 'water_meter'
 
     id = Column(Integer, primary_key=True)
-    apartment_id = Column(Integer, ForeignKey('apartments.id'), nullable=False)
+    apartment_id = Column(Integer, ForeignKey('apartment.id'), nullable=False)
 
-    apartment = relationship('Apartment', back_populates='water_meters', lazy='noload')
-    readings = relationship('Reading', back_populates='water_meter', lazy='noload')
+    apartment = relationship('Apartment', back_populates='water_meter', lazy='noload')
+    reading = relationship('Reading', back_populates='water_meter', lazy='noload')
 
 
 class Reading(Base):
-    __tablename__ = 'readings'
+    __tablename__ = 'reading'
 
     id = Column(Integer, primary_key=True)
-    water_meter_id = Column(Integer, ForeignKey('water_meters.id'), nullable=False)
+    water_meter_id = Column(Integer, ForeignKey('water_meter.id'), nullable=False)
     month = Column(Date, nullable=False)
     value = Column(Float, nullable=False)
-    water_meter = relationship('WaterMeter', back_populates='readings', lazy='noload')
+    water_meter = relationship('WaterMeter', back_populates='reading', lazy='noload')
 
 
 class Tariff(Base):
-    __tablename__ = 'tariffs'
+    __tablename__ = 'tariff'
 
     id = Column(Integer, primary_key=True)
+    apartment_id = Column(Integer, ForeignKey('apartment.id'), nullable=False)
+    apartment = relationship('Apartment', back_populates='tariff', lazy='noload')
     rate_per_square_meter = Column(Float, nullable=False)
     rate_per_unit_of_water = Column(Float, nullable=False)
 

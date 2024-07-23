@@ -2,7 +2,20 @@ from pydantic import BaseModel, ConfigDict
 from typing import Union, List, Optional
 from datetime import date
 
-from api_app.database import models
+
+class TariffBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    rate_per_square_meter: float
+    rate_per_unit_of_water: float
+
+
+class TariffUpLoad(TariffBase):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class TariffGet(TariffBase):
+    model_config = ConfigDict(from_attributes=True)
+    apartment_id: int
 
 
 class ItemBase(BaseModel):
@@ -36,20 +49,21 @@ class WaterMeter(WaterMeterBase):
 
 class ApartmentBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
-    house_id: int
     area: float
     water_supply_bill: Optional[float] = None
     common_property_bill: Optional[float] = None
 
 
-class Apartment(ApartmentBase):
+class ApartmentUpLoad(ApartmentBase):
     model_config = ConfigDict(from_attributes=True)
-    water_meters: List[WaterMeter] = []
+    count_water_meters: int
+    tariff: TariffUpLoad
 
 
 class ApartmentGet(ApartmentBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
+    house_id: int
     water_meters: List[WaterMeter]
 
 
@@ -58,9 +72,9 @@ class HouseBase(BaseModel):
     address: str
 
 
-class House(HouseBase):
+class HouseUpLoad(HouseBase):
     model_config = ConfigDict(from_attributes=True)
-    apartments: List[Apartment]
+    apartments: List[ApartmentUpLoad]
 
 
 class HouseGet(HouseBase):
@@ -69,12 +83,5 @@ class HouseGet(HouseBase):
     apartments: List[ApartmentGet]
 
 
-class TariffBase(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-    rate_per_square_meter: float
-    rate_per_unit_of_water: float
 
 
-class Tariff(TariffBase):
-    model_config = ConfigDict(from_attributes=True)
-    id: int

@@ -5,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy import select, update
 from api_app.database.databese import DatabaseHelper
 from api_app.database import schemas, models
-from random import randint as rand
 
 
 async def create_item(db: DatabaseHelper, item: schemas.ItemBase) -> None:
@@ -28,29 +27,40 @@ async def get_item(db: DatabaseHelper) -> list:
     return out
 
 
-async def create_house(db: DatabaseHelper, houses: list[schemas.House]) -> None:
+async def create_house(db: DatabaseHelper, houses: list[schemas.HouseUpLoad]) -> None:
     async with db.session_factory() as session:
         async with session.begin():
             for house in houses:
                 db_house = models.House(address=house.address)
                 session.add(db_house)
+                await session.flush()
+                await session.refresh(db_house)
+                fk_house: int = db_house.id
                 for apartment in house.apartments:
-                    db_apartment = models.Apartment(house_id=apartment.house_id, area=apartment.area,
+                    db_apartment = models.Apartment(house_id=fk_house, area=apartment.area,
                                                     water_supply_bill=apartment.water_supply_bill,
                                                     common_property_bill=apartment.common_property_bill)
                     session.add(db_apartment)
                     await session.flush()
                     await session.refresh(db_apartment)
-                    fk = db_apartment.id
-                    for _ in range(rand(1, 4)):
-                        db_wm = models.WaterMeter(apartment_id=fk)
+                    fk_apartment = db_apartment.id
+                    db_tariff = models.Tariff(apartment_id=fk_apartment,
+                                              rate_per_unit_of_water=apartment.tariff.rate_per_unit_of_water,
+                                              rate_per_square_meter=apartment.tariff.rate_per_square_meter)
+                    session.add(db_tariff)
+                    for _ in range(apartment.count_water_meters):
+                        db_wm = models.WaterMeter(apartment_id=fk_apartment)
+                        session.add(db_wm)
+                        await session.flush()
+                        await session.refresh(db_wm)
             await session.commit()
 
 
 async def get_houses(db: DatabaseHelper, ) -> list[schemas.HouseGet]:
     out: list[schemas.HouseGet] = []
     async with db.session_factory() as session:
-        stmt = select(models.House)
-        for h in await session.scalars(stmt):
-            print(h.address)
+        houses = (await session.scalars(select(models.House))).all()
+        for house in houses:
+            for apart in await house.awaitable_attrs.apartment:
+                apart_m: models.Apartment = apart
     return out
