@@ -36,7 +36,7 @@ async def get_main(db: DatabaseHelper = Depends(get_db)):
 
 @app.post("/enter_houses_data", response_model=list[schemas.HouseUpLoad])
 async def enter_houses_data(houses: list[schemas.HouseUpLoad], db: DatabaseHelper = Depends(get_db)):
-    await CRUD.create_house(db, houses)
+    await CRUD.create_houses(db, houses)
     return houses
 
 

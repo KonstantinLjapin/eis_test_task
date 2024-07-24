@@ -2,6 +2,8 @@ from sqlalchemy import select, update
 from api_app.database.databese import DatabaseHelper
 from api_app.database import schemas, models
 
+# TODO update watermeter, redings, celery corr
+
 
 async def create_item(db: DatabaseHelper, item: schemas.ItemBase) -> None:
     async with db.session_factory() as session:
@@ -23,7 +25,7 @@ async def get_item(db: DatabaseHelper) -> list:
     return out
 
 
-async def create_house(db: DatabaseHelper, houses: list[schemas.HouseUpLoad]) -> None:
+async def create_houses(db: DatabaseHelper, houses: list[schemas.HouseUpLoad]) -> None:
     async with db.session_factory() as session:
         async with session.begin():
             for house in houses:
