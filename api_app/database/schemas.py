@@ -15,6 +15,7 @@ class TariffUpLoad(TariffBase):
 
 class TariffGet(TariffBase):
     model_config = ConfigDict(from_attributes=True)
+    id: int
     apartment_id: int
 
 
@@ -64,6 +65,7 @@ class ApartmentGet(ApartmentBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
     house_id: int
+    tariff: TariffGet
     water_meters: List[WaterMeter]
 
 

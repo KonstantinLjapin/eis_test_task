@@ -1,7 +1,3 @@
-from api_app.database.models import Base
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy import select, update
 from api_app.database.databese import DatabaseHelper
 from api_app.database import schemas, models
@@ -59,8 +55,24 @@ async def create_house(db: DatabaseHelper, houses: list[schemas.HouseUpLoad]) ->
 async def get_houses(db: DatabaseHelper, ) -> list[schemas.HouseGet]:
     out: list[schemas.HouseGet] = []
     async with db.session_factory() as session:
-        houses = (await session.scalars(select(models.House))).all()
-        for house in houses:
+        for house in (await session.scalars(select(models.House))).all():
+            out_house: schemas.HouseGet = schemas.HouseGet(id=house.id, address=house.address, apartments=[])
             for apart in await house.awaitable_attrs.apartment:
-                apart_m: models.Apartment = apart
+                tariff: models.Tariff = (await apart.awaitable_attrs.tariff)[0]
+                out_tariff: schemas.TariffGet = schemas.TariffGet(id=tariff.id, apartment_id=tariff.apartment_id,
+                                                                  rate_per_square_meter=tariff.rate_per_square_meter,
+                                                                  rate_per_unit_of_water=tariff.rate_per_unit_of_water)
+                out_apart: schemas.ApartmentGet = schemas.ApartmentGet(id=apart.id, house_id=out_house.id,
+                                                                       area=apart.area, tariff=out_tariff,
+                                                                       water_meters=[])
+                for water_meter in await apart.awaitable_attrs.water_meter:
+                    out_water_meter: schemas.WaterMeter = schemas.WaterMeter(id=water_meter.id,
+                                                                             apartment_id=out_apart.id, reading=[])
+                    for reading in await water_meter.awaitable_attrs.reading:
+                        out_reading: schemas.Reading(id=reading.id, water_meter_id=out_water_meter.id,
+                                                     value=reading.value, month=reading.month)
+                        out_water_meter.readings.append(out_reading)
+                    out_apart.water_meters.append(out_water_meter)
+                out_house.apartments.append(out_apart)
+            out.append(out_house)
     return out

@@ -40,11 +40,10 @@ async def enter_houses_data(houses: list[schemas.HouseUpLoad], db: DatabaseHelpe
     return houses
 
 
-@app.get("/out_houses_data", response_model=None)
+@app.get("/out_houses_data", response_model=list[schemas.HouseGet])
 async def out_houses_data(db: DatabaseHelper = Depends(get_db)):
     out: list[schemas.HouseGet] = await CRUD.get_houses(db)
-    print(out)
-    return
+    return out
 
 
 @app.post("/start_calculator", response_model=bool)
