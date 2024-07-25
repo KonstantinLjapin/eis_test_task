@@ -29,12 +29,16 @@ class ReadingBase(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     month: date
     value: float
+    water_meter_id: int
 
 
-class Reading(ReadingBase):
+class ReadingUpLoad(ReadingBase):
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ReadingGet(ReadingBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    water_meter_id: int
 
 
 class WaterMeterBase(BaseModel):
@@ -45,7 +49,7 @@ class WaterMeterBase(BaseModel):
 class WaterMeter(WaterMeterBase):
     model_config = ConfigDict(from_attributes=True)
     id: int
-    readings: List[Reading] = []
+    readings: List[ReadingGet] = []
 
 
 class ApartmentBase(BaseModel):

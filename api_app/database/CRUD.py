@@ -2,27 +2,8 @@ from sqlalchemy import select, update
 from api_app.database.databese import DatabaseHelper
 from api_app.database import schemas, models
 
-# TODO update watermeter, redings, celery corr
 
-
-async def create_item(db: DatabaseHelper, item: schemas.ItemBase) -> None:
-    async with db.session_factory() as session:
-        async with session.begin():
-            session.add(models.Item(title=item.title, description=item.description))
-            stmt = select(models.Item)
-            await session.execute(stmt)
-            await session.commit()
-
-
-async def get_item(db: DatabaseHelper) -> list:
-    out: list = []
-    async with db.session_factory() as session:
-        async with session.begin():
-            stmt = select(models.Item)
-            result = await session.execute(stmt)
-            for a in result.scalars():
-                out.append(schemas.ItemBase(title=a.title, description=a.description))
-    return out
+# TODO , celery corr Update model first
 
 
 async def create_houses(db: DatabaseHelper, houses: list[schemas.HouseUpLoad]) -> None:
@@ -70,11 +51,31 @@ async def get_houses(db: DatabaseHelper, ) -> list[schemas.HouseGet]:
                 for water_meter in await apart.awaitable_attrs.water_meter:
                     out_water_meter: schemas.WaterMeter = schemas.WaterMeter(id=water_meter.id,
                                                                              apartment_id=out_apart.id, reading=[])
-                    for reading in await water_meter.awaitable_attrs.reading:
-                        out_reading: schemas.Reading(id=reading.id, water_meter_id=out_water_meter.id,
-                                                     value=reading.value, month=reading.month)
+                    query: select = select(models.Reading).where(models.Reading.water_meter_id == water_meter.id)
+                    for reading in (await session.scalars(query)).all():
+                        out_reading: schemas.ReadingGet = schemas.ReadingGet(id=reading.id,
+                                                                             water_meter_id=out_water_meter.id,
+                                                                             value=reading.value, month=reading.month)
                         out_water_meter.readings.append(out_reading)
                     out_apart.water_meters.append(out_water_meter)
                 out_house.apartments.append(out_apart)
             out.append(out_house)
     return out
+
+
+async def enter_readings(db: DatabaseHelper, readings: list[schemas.ReadingUpLoad]) -> None:
+    async with db.session_factory() as session:
+        async with session.begin():
+            for reading in readings:
+                db_reading = models.Reading(month=reading.month, value=reading.value,
+                                            water_meter_id=reading.water_meter_id,)
+                session.add(db_reading)
+
+            await session.commit()
+
+
+async def calculator(db: DatabaseHelper) -> None:
+    async with db.session_factory() as session:
+        for apartment in (await session.scalars(select(models.Apartment))).all():
+            tariff: models.Tariff = (await apartment.awaitable_attrs.tariff)[0]
+            apartment.common_property_bill = apartment.area * tariff.rate_per_square_meter

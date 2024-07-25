@@ -22,18 +22,6 @@ def get_db(request: Request):
     return request.state.db
 
 
-@app.post("/item", response_model=schemas.ItemBase)
-async def get_main(item: schemas.ItemBase, db: DatabaseHelper = Depends(get_db)):
-    await CRUD.create_item(db, item)
-    return item
-
-
-@app.get("/items", response_model=list[schemas.ItemBase])
-async def get_main(db: DatabaseHelper = Depends(get_db)):
-    out: list = await CRUD.get_item(db)
-    return out
-
-
 @app.post("/enter_houses_data", response_model=list[schemas.HouseUpLoad])
 async def enter_houses_data(houses: list[schemas.HouseUpLoad], db: DatabaseHelper = Depends(get_db)):
     await CRUD.create_houses(db, houses)
@@ -46,9 +34,15 @@ async def out_houses_data(db: DatabaseHelper = Depends(get_db)):
     return out
 
 
+@app.post("/enter_readings_data", response_model=list[schemas.ReadingUpLoad])
+async def enter_houses_data(readings: list[schemas.ReadingUpLoad], db: DatabaseHelper = Depends(get_db)):
+    await CRUD.enter_readings(db, readings)
+    return readings
+
+
 @app.post("/start_calculator", response_model=bool)
 async def start_calculator(db: DatabaseHelper = Depends(get_db)):
-    pass
+    await CRUD.calculator(db)
     return True
 
 if __name__ == "__main__":
