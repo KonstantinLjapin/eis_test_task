@@ -7,13 +7,23 @@ services:
       - ./.env
     stop_signal: SIGINT
     container_name: api_fast_api
-    command: bash -c "sleep 2s; chmod +x api_app/main.py; python3.11 api_app/main.py"
+    command: bash -c "sleep 2s; chmod +x api_app/main.py; python3.11 api_app/main.py
+      & celery -A api_app.main.celery worker -l INFO"
     volumes:
       - ./dump/app:/usr/src/app
     ports:
       - "8000:8000"
     depends_on:
       - db
+      - redis
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    hostname: redis
+    restart: always
+    volumes:
+      - ./dump/redis:/data
 
   db:
     container_name: ${DB_CONTAINER_NAME}

@@ -3,6 +3,21 @@ import asyncio
 from api_app.database.databese import DatabaseHelper, base_create
 from api_app.database import schemas, models, CRUD
 from fastapi import FastAPI, Depends, HTTPException, Request, Response
+from celery import Celery, shared_task
+
+celery = Celery(
+    'api_app.main',
+    broker="redis://redis:6379/0",
+    backend="redis://redis:6379/0"
+)
+
+
+@shared_task
+def divide(x, y):
+    import time
+    time.sleep(5)
+    return x / y
+
 
 app = FastAPI()
 
@@ -42,7 +57,7 @@ async def enter_houses_data(readings: list[schemas.ReadingUpLoad], db: DatabaseH
 
 @app.post("/start_calculator", response_model=bool)
 async def start_calculator(db: DatabaseHelper = Depends(get_db)):
-    await CRUD.calculator(db)
+    task = divide.delay(1, 2)
     return True
 
 if __name__ == "__main__":
