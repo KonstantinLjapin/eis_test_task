@@ -3,7 +3,7 @@ from api_app.database.databese import DatabaseHelper
 from api_app.database import schemas, models
 
 
-# TODO , celery corr Update model first
+# TODO , celery corr
 
 
 async def create_houses(db: DatabaseHelper, houses: list[schemas.HouseUpLoad]) -> None:
@@ -46,6 +46,8 @@ async def get_houses(db: DatabaseHelper, ) -> list[schemas.HouseGet]:
                                                                   rate_per_square_meter=tariff.rate_per_square_meter,
                                                                   rate_per_unit_of_water=tariff.rate_per_unit_of_water)
                 out_apart: schemas.ApartmentGet = schemas.ApartmentGet(id=apart.id, house_id=out_house.id,
+                                                                       water_supply_bill=apart.water_supply_bill,
+                                                                       common_property_bill=apart.common_property_bill,
                                                                        area=apart.area, tariff=out_tariff,
                                                                        water_meters=[])
                 for water_meter in await apart.awaitable_attrs.water_meter:
@@ -75,7 +77,22 @@ async def enter_readings(db: DatabaseHelper, readings: list[schemas.ReadingUpLoa
 
 
 async def calculator(db: DatabaseHelper) -> None:
-    async with db.session_factory() as session:
+    async with (db.session_factory() as session):
         for apartment in (await session.scalars(select(models.Apartment))).all():
+            print(apartment.water_supply_bill, apartment.common_property_bill, "BILLs before")
             tariff: models.Tariff = (await apartment.awaitable_attrs.tariff)[0]
-            apartment.common_property_bill = apartment.area * tariff.rate_per_square_meter
+            apartment.common_property_bill = apartment.common_property_bill + (apartment.area
+                                                                               * tariff.rate_per_square_meter)
+            water_meters_ids: list = [w_m.id for w_m in await apartment.awaitable_attrs.water_meter]
+            water_meters_readings_diff: list = []
+            for wm_id in water_meters_ids:
+                query: select = select(models.Reading).where(models.Reading.water_meter_id == wm_id)
+                readings = (await session.scalars(query)).all()
+                water_meters_readings_diff.append(readings[-1].value - readings[-2].value)
+            apartment.water_supply_bill = apartment.water_supply_bill + (sum(water_meters_readings_diff)
+                                                                         * tariff.rate_per_unit_of_water)
+            session.add(apartment)
+            await session.flush()
+            await session.refresh(apartment)
+            print(apartment.water_supply_bill, apartment.common_property_bill, "BILLs after flush")
+        await session.commit()
