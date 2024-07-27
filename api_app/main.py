@@ -4,6 +4,7 @@ from api_app.database.databese import DatabaseHelper, base_create
 from api_app.database import schemas, models, CRUD
 from fastapi import FastAPI, Depends, HTTPException, Request, Response
 from celery import Celery, shared_task
+import asyncio
 
 celery = Celery(
     'api_app.main',
@@ -13,10 +14,8 @@ celery = Celery(
 
 
 @shared_task
-def divide(x, y):
-    import time
-    time.sleep(5)
-    return x / y
+def corr_calculate() -> None:
+    asyncio.run(CRUD.calculator())
 
 
 app = FastAPI()
@@ -39,26 +38,39 @@ def get_db(request: Request):
 
 @app.post("/enter_houses_data", response_model=list[schemas.HouseUpLoad])
 async def enter_houses_data(houses: list[schemas.HouseUpLoad], db: DatabaseHelper = Depends(get_db)):
-    await CRUD.create_houses(db, houses)
-    return houses
+    try:
+        await CRUD.create_houses(db, houses)
+        return Response("Ok", status_code=200)
+    except Exception as e:
+        return Response(f"{e}", status_code=500)
 
 
 @app.get("/out_houses_data", response_model=list[schemas.HouseGet])
 async def out_houses_data(db: DatabaseHelper = Depends(get_db)):
-    out: list[schemas.HouseGet] = await CRUD.get_houses(db)
-    return out
+    try:
+        out: list[schemas.HouseGet] = await CRUD.get_houses(db)
+        return out
+    except Exception as e:
+        return Response(f"{e}", status_code=500)
 
 
 @app.post("/enter_readings_data", response_model=list[schemas.ReadingUpLoad])
 async def enter_houses_data(readings: list[schemas.ReadingUpLoad], db: DatabaseHelper = Depends(get_db)):
-    await CRUD.enter_readings(db, readings)
-    return readings
+    try:
+        await CRUD.enter_readings(db, readings)
+        return Response("Ok", status_code=200)
+    except Exception as e:
+        return Response(f"{e}", status_code=500)
 
 
 @app.post("/start_calculator", response_model=bool)
-async def start_calculator(db: DatabaseHelper = Depends(get_db)):
-    task = divide.delay(1, 2)
-    return True
+async def start_calculator():
+    try:
+        corr_calculate.delay()
+        return Response("Ok", status_code=200)
+    except Exception as e:
+        return Response(f"{e}", status_code=500)
+
 
 if __name__ == "__main__":
     # создаются таблицы в бд

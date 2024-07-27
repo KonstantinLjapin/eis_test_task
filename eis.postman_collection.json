@@ -1,0 +1,113 @@
+{
+	"info": {
+		"_postman_id": "a8f68c64-4811-4573-9afd-2f23b83371cd",
+		"name": "eis",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "27646919"
+	},
+	"item": [
+		{
+			"name": "load_all_data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n  {\n    \"address\": \"first street house 1\",\n    \"apartments\": [\n      {\n        \"area\": 100,\n        \"water_supply_bill\": 100,\n        \"common_property_bill\": 200,\n        \"count_water_meters\": 2,\n        \"tariff\": {\n          \"rate_per_square_meter\": 1,\n          \"rate_per_unit_of_water\": 1\n        }\n      }\n    ]\n  },\n  {\n    \"address\": \"first street house 2\",\n    \"apartments\": [\n      {\n        \"area\": 50,\n        \"water_supply_bill\": 50,\n        \"common_property_bill\": 100,\n        \"count_water_meters\": 1,\n        \"tariff\": {\n          \"rate_per_square_meter\": 2,\n          \"rate_per_unit_of_water\": 2\n        }\n      }\n    ]\n  },\n  {\n    \"address\": \"next street house 1\",\n    \"apartments\": [\n      {\n        \"area\": 200,\n        \"water_supply_bill\": 200,\n        \"common_property_bill\": 500,\n        \"count_water_meters\": 5,\n        \"tariff\": {\n          \"rate_per_square_meter\": 3,\n          \"rate_per_unit_of_water\": 4\n        }\n      }\n    ]\n  },\n  {\n    \"address\": \"last street house 1\",\n    \"apartments\": [\n      {\n        \"area\": 10,\n        \"water_supply_bill\": 10,\n        \"common_property_bill\": 20,\n        \"count_water_meters\": 1,\n        \"tariff\": {\n          \"rate_per_square_meter\": 0.5,\n          \"rate_per_unit_of_water\": 1\n        }\n      }\n    ]\n  }\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://0.0.0.0:8000/enter_houses_data",
+					"protocol": "http",
+					"host": [
+						"0",
+						"0",
+						"0",
+						"0"
+					],
+					"port": "8000",
+					"path": [
+						"enter_houses_data"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "enter_readings_data",
+			"request": {
+				"method": "POST",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "get_houses",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://0.0.0.0:8000/out_houses_data",
+					"protocol": "http",
+					"host": [
+						"0",
+						"0",
+						"0",
+						"0"
+					],
+					"port": "8000",
+					"path": [
+						"out_houses_data"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "calculate",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "docs",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://0.0.0.0:8000/docs",
+					"protocol": "http",
+					"host": [
+						"0",
+						"0",
+						"0",
+						"0"
+					],
+					"port": "8000",
+					"path": [
+						"docs"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

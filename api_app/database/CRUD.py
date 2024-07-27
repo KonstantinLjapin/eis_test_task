@@ -1,9 +1,7 @@
-from sqlalchemy import select, update
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncEngine
 from api_app.database.databese import DatabaseHelper
 from api_app.database import schemas, models
-
-
-# TODO , celery corr
 
 
 async def create_houses(db: DatabaseHelper, houses: list[schemas.HouseUpLoad]) -> None:
@@ -33,6 +31,29 @@ async def create_houses(db: DatabaseHelper, houses: list[schemas.HouseUpLoad]) -
                         await session.flush()
                         await session.refresh(db_wm)
             await session.commit()
+
+
+async def calculator() -> None:
+    db: DatabaseHelper = DatabaseHelper()
+    engine: AsyncEngine = db.engine
+    async with (db.session_factory() as session):
+        for apartment in (await session.scalars(select(models.Apartment))).all():
+            tariff: models.Tariff = (await apartment.awaitable_attrs.tariff)[0]
+            apartment.common_property_bill = apartment.common_property_bill + (apartment.area
+                                                                               * tariff.rate_per_square_meter)
+            water_meters_ids: list = [w_m.id for w_m in await apartment.awaitable_attrs.water_meter]
+            water_meters_readings_diff: list = []
+            for wm_id in water_meters_ids:
+                query: select = select(models.Reading).where(models.Reading.water_meter_id == wm_id)
+                readings = (await session.scalars(query)).all()
+                water_meters_readings_diff.append(readings[-1].value - readings[-2].value)
+            apartment.water_supply_bill = apartment.water_supply_bill + (sum(water_meters_readings_diff)
+                                                                         * tariff.rate_per_unit_of_water)
+            session.add(apartment)
+            await session.flush()
+            await session.refresh(apartment)
+        await session.commit()
+    await engine.dispose()
 
 
 async def get_houses(db: DatabaseHelper, ) -> list[schemas.HouseGet]:
@@ -75,24 +96,3 @@ async def enter_readings(db: DatabaseHelper, readings: list[schemas.ReadingUpLoa
 
             await session.commit()
 
-
-async def calculator(db: DatabaseHelper) -> None:
-    async with (db.session_factory() as session):
-        for apartment in (await session.scalars(select(models.Apartment))).all():
-            print(apartment.water_supply_bill, apartment.common_property_bill, "BILLs before")
-            tariff: models.Tariff = (await apartment.awaitable_attrs.tariff)[0]
-            apartment.common_property_bill = apartment.common_property_bill + (apartment.area
-                                                                               * tariff.rate_per_square_meter)
-            water_meters_ids: list = [w_m.id for w_m in await apartment.awaitable_attrs.water_meter]
-            water_meters_readings_diff: list = []
-            for wm_id in water_meters_ids:
-                query: select = select(models.Reading).where(models.Reading.water_meter_id == wm_id)
-                readings = (await session.scalars(query)).all()
-                water_meters_readings_diff.append(readings[-1].value - readings[-2].value)
-            apartment.water_supply_bill = apartment.water_supply_bill + (sum(water_meters_readings_diff)
-                                                                         * tariff.rate_per_unit_of_water)
-            session.add(apartment)
-            await session.flush()
-            await session.refresh(apartment)
-            print(apartment.water_supply_bill, apartment.common_property_bill, "BILLs after flush")
-        await session.commit()
